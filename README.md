@@ -45,7 +45,7 @@ To get started, you'll need to install *Ganache* and *MetaMask*:
 Clone the repository to your local machine:
 
 bash
-git clone https://github.com/yourusername/land-registry-dapp.git
+git clone https://github.com/SHAKEEB0/LandRegistrySmartContract.git
 
 
 ### *3. Run Ganache*
