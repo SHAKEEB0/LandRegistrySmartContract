@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Land Registry</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .output {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e9ecef;
+            border-left: 5px solid #28a745;
+        }
+    </style>
+</head>
+<body>
+    <h1>Land Registry</h1>
+    <div class="container">
+        <h3>Register Land</h3>
+        <input type="number" id="landId" placeholder="Land ID">
+        <input type="text" id="location" placeholder="Location">
+        <input type="number" id="area" placeholder="Area (sq meters)">
+        <button onclick="registerLand()">Register</button>
+        <p class="output" id="registerStatus"></p>
+
+        <h3>Transfer Ownership</h3>
+        <input type="number" id="transferId" placeholder="Land ID">
+        <input type="text" id="newOwner" placeholder="New Owner Address">
+        <button onclick="transferOwnership()">Transfer</button>
+        <p class="output" id="transferStatus"></p>
+
+        <h3>Get Land Details</h3>
+        <input type="number" id="queryId" placeholder="Land ID">
+        <button onclick="getLandDetails()">Get Details</button>
+        <p class="output" id="landDetails"></p>
+    </div>
+
+    <script>
+        const web3 = new Web3("http://127.0.0.1:7545");
+        // Connect to MetaMask
+        const contractAddress = "0x3948248B694ef62d10b8d722A4751Eb1e6dc4f67"; // Replace with your deployed contract address
+        const senderAddress = "0x01337233e55DE4233D4A775B93B63a0D8170af35"; 
+       
+        const contractABI = [ 
+            {
+                "inputs": [
+                    {"internalType": "uint256", "name": "_id", "type": "uint256"},
+                    {"internalType": "string", "name": "_location", "type": "string"},
+                    {"internalType": "uint256", "name": "_area", "type": "uint256"}
+                ],
+                "name": "registerLand",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {"internalType": "uint256", "name": "_id", "type": "uint256"},
+                    {"internalType": "address", "name": "_newOwner", "type": "address"}
+                ],
+                "name": "transferOwnership",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {"internalType": "uint256", "name": "_id", "type": "uint256"}
+                ],
+                "name": "getLand",
+                "outputs": [
+                    {"internalType": "uint256", "name": "", "type": "uint256"},
+                    {"internalType": "string", "name": "", "type": "string"},
+                    {"internalType": "uint256", "name": "", "type": "uint256"},
+                    {"internalType": "address", "name": "", "type": "address"},
+                    {"internalType": "bool", "name": "", "type": "bool"}
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+        async function connectMetaMask() {
+    if (window.ethereum) {
+        try {
+            const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+            console.log("Connected Account:", accounts[0]);
+        } catch (error) {
+            console.error("User denied account access:", error);
+        }
+    } else {
+        alert("MetaMask is not installed!");
+    }
+}
+connectMetaMask();
+
+
+        const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+        async function registerLand() {
+            const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+            const id = document.getElementById("landId").value;
+            const location = document.getElementById("location").value;
+            const area = document.getElementById("area").value;
+
+            try {
+                await contract.methods.registerLand(id, location, area).send({ from: accounts[0] });
+                document.getElementById("registerStatus").innerText = `Land ${id} registered successfully!`;
+            } catch (error) {
+                document.getElementById("registerStatus").innerText = `Error: ${error.message}`;
+            }
+        }
+
+        async function transferOwnership() {
+            const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+            const id = document.getElementById("transferId").value;
+            const newOwner = document.getElementById("newOwner").value;
+
+            try {
+                await contract.methods.transferOwnership(id, newOwner).send({ from: accounts[0] });
+                document.getElementById("transferStatus").innerText = `Ownership of land ${id} transferred to ${newOwner}`;
+            } catch (error) {
+                document.getElementById("transferStatus").innerText = `Error: ${error.message}`;
+            }
+        }
+
+        async function getLandDetails() {
+            const id = document.getElementById("queryId").value;
+
+            try {
+                const land = await contract.methods.getLand(id).call();
+                document.getElementById("landDetails").innerText = `Land ${land[0]} at ${land[1]}, ${land[2]} sq meters, Owner: ${land[3]}`;
+            } catch (error) {
+                document.getElementById("landDetails").innerText = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
